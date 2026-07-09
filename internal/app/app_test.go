@@ -10,16 +10,20 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func newTestConfig() config.ConfigInterface {
-	cfg := config.New()
-	cfg.SetAppName("PicoTest")
-	cfg.SetAppEnv("testing")
-	cfg.SetAppHost("127.0.0.1")
-	cfg.SetAppPort("8080")
-	cfg.SetAppUrl("http://localhost:8080")
-	cfg.SetAppDebug(true)
-	cfg.SetDatabaseDriver("sqlite")
-	cfg.SetDatabaseName(fmt.Sprintf("file:pico_test_%d?mode=memory&cache=shared", time.Now().UnixNano()))
+func newTestConfig(t *testing.T) config.ConfigInterface {
+	t.Helper()
+	t.Setenv("APP_HOST", "127.0.0.1")
+	t.Setenv("APP_PORT", "8080")
+	t.Setenv("APP_ENV", "testing")
+	t.Setenv("APP_NAME", "PicoTest")
+	t.Setenv("APP_URL", "http://localhost:8080")
+	t.Setenv("APP_DEBUG", "true")
+	t.Setenv("DB_DRIVER", "sqlite")
+	t.Setenv("DB_DATABASE", fmt.Sprintf("file:pico_test_%d?mode=memory&cache=shared", time.Now().UnixNano()))
+	cfg, err := config.NewFromEnv()
+	if err != nil {
+		t.Fatalf("config.NewFromEnv failed: %v", err)
+	}
 	return cfg
 }
 
@@ -31,7 +35,7 @@ func TestNew_NilConfig(t *testing.T) {
 }
 
 func TestNew_SetsDefaultLogger(t *testing.T) {
-	cfg := newTestConfig()
+	cfg := newTestConfig(t)
 
 	a, err := New(cfg)
 	if err != nil {
@@ -45,7 +49,7 @@ func TestNew_SetsDefaultLogger(t *testing.T) {
 }
 
 func TestNew_SetsConfig(t *testing.T) {
-	cfg := newTestConfig()
+	cfg := newTestConfig(t)
 
 	a, err := New(cfg)
 	if err != nil {
@@ -62,7 +66,7 @@ func TestNew_SetsConfig(t *testing.T) {
 }
 
 func TestNew_SetsDatabase(t *testing.T) {
-	cfg := newTestConfig()
+	cfg := newTestConfig(t)
 
 	a, err := New(cfg)
 	if err != nil {
@@ -76,7 +80,7 @@ func TestNew_SetsDatabase(t *testing.T) {
 }
 
 func TestNew_SetsNeatDatabase(t *testing.T) {
-	cfg := newTestConfig()
+	cfg := newTestConfig(t)
 
 	a, err := New(cfg)
 	if err != nil {
@@ -108,7 +112,7 @@ func TestClose_NilDatabaseDoesNotPanic(t *testing.T) {
 }
 
 func TestClose_ClosesNeatDatabase(t *testing.T) {
-	cfg := newTestConfig()
+	cfg := newTestConfig(t)
 
 	a, err := New(cfg)
 	if err != nil {
@@ -155,7 +159,7 @@ func TestSetLogger(t *testing.T) {
 func TestSetConfig(t *testing.T) {
 	a := &appImplementation{}
 
-	a.SetConfig(newTestConfig())
+	a.SetConfig(newTestConfig(t))
 	if a.GetConfig() == nil {
 		t.Fatal("GetConfig() returned nil after SetConfig")
 	}

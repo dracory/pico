@@ -11,10 +11,16 @@ import (
 
 func newTestApp(t *testing.T) app.AppInterface {
 	t.Helper()
-	cfg := config.New()
-	cfg.SetAppEnv("testing")
-	cfg.SetDatabaseDriver("sqlite")
-	cfg.SetDatabaseName(":memory:")
+	t.Setenv("APP_HOST", "localhost")
+	t.Setenv("APP_PORT", "8080")
+	t.Setenv("APP_ENV", "testing")
+	t.Setenv("DB_DRIVER", "sqlite")
+	t.Setenv("DB_DATABASE", ":memory:")
+
+	cfg, err := config.NewFromEnv()
+	if err != nil {
+		t.Fatalf("config.NewFromEnv failed: %v", err)
+	}
 
 	a, err := app.New(cfg)
 	if err != nil {

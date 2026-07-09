@@ -80,7 +80,6 @@ cfg.IsEnvTesting()     // true when APP_ENV=testing
 | `DB_TIMEZONE` | `UTC` | No | Database timezone |
 | `DB_DSN` | — | No | Direct DSN override |
 | `DB_PREFIX` | — | No | Table prefix |
-| `DB_DEFAULT_CONNECTION` | `default` | No | Default connection name |
 
 ### Connection Pool Settings
 
@@ -147,7 +146,7 @@ a.GetConfig().GetDatabaseName()
 
 ### Multi-Connection Support
 
-Pico supports named database connections. The default connection is named `"default"` but can be renamed via `DB_DEFAULT_CONNECTION`:
+Pico supports named database connections. The default connection is named `"default"` and can be renamed programmatically via `SetDatabaseDefaultConnection()`:
 
 ```go
 conns := cfg.GetDatabaseConnections()           // []DatabaseConnectionConfigInterface

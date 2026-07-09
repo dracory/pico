@@ -51,8 +51,8 @@ func setRequiredEnv(t *testing.T) {
     t.Setenv(KEY_APP_HOST, "localhost")
     t.Setenv(KEY_APP_PORT, "8080")
     t.Setenv(KEY_APP_ENVIRONMENT, "testing")
-    t.Setenv(KEY_DB_DRIVER, "sqlite")
-    t.Setenv(KEY_DB_DATABASE, ":memory:")
+    t.Setenv(KEY_DEFAULT_DB_DRIVER, "sqlite")
+    t.Setenv(KEY_DEFAULT_DB_DATABASE, ":memory:")
 }
 ```
 

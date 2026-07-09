@@ -13,15 +13,20 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func newTestApp() app.AppInterface {
-	cfg := config.New()
-	cfg.SetAppEnv("testing")
-	cfg.SetAppName("PicoTest")
-	cfg.SetAppHost("127.0.0.1")
-	cfg.SetAppPort("8080")
-	cfg.SetAppUrl("http://localhost:8080")
-	cfg.SetDatabaseDriver("sqlite")
-	cfg.SetDatabaseName(":memory:")
+func newTestApp(t *testing.T) app.AppInterface {
+	t.Helper()
+	t.Setenv("APP_HOST", "127.0.0.1")
+	t.Setenv("APP_PORT", "8080")
+	t.Setenv("APP_ENV", "testing")
+	t.Setenv("APP_NAME", "PicoTest")
+	t.Setenv("APP_URL", "http://localhost:8080")
+	t.Setenv("DB_DRIVER", "sqlite")
+	t.Setenv("DB_DATABASE", ":memory:")
+
+	cfg, err := config.NewFromEnv()
+	if err != nil {
+		panic("failed to create test config: " + err.Error())
+	}
 
 	a, err := app.New(cfg)
 	if err != nil {
@@ -31,7 +36,7 @@ func newTestApp() app.AppInterface {
 }
 
 func TestRouterNotNil(t *testing.T) {
-	a := newTestApp()
+	a := newTestApp(t)
 	r := Router(a)
 	if r == nil {
 		t.Fatal("Router() returned nil")
@@ -39,7 +44,7 @@ func TestRouterNotNil(t *testing.T) {
 }
 
 func TestRouterHasRoutes(t *testing.T) {
-	a := newTestApp()
+	a := newTestApp(t)
 	r := Router(a)
 	if len(r.GetRoutes()) == 0 {
 		t.Fatal("Router() has no routes")
@@ -47,7 +52,7 @@ func TestRouterHasRoutes(t *testing.T) {
 }
 
 func TestRootEndpoint(t *testing.T) {
-	a := newTestApp()
+	a := newTestApp(t)
 	r := Router(a)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -69,7 +74,7 @@ func TestRootEndpoint(t *testing.T) {
 }
 
 func TestGlobalMiddlewaresTesting(t *testing.T) {
-	mw := globalMiddlewares(newTestApp())
+	mw := globalMiddlewares(newTestApp(t))
 	if len(mw) == 0 {
 		t.Fatal("expected at least some middlewares")
 	}
@@ -82,7 +87,7 @@ func TestGlobalMiddlewaresTesting(t *testing.T) {
 }
 
 func TestRoutesList(t *testing.T) {
-	a := newTestApp()
+	a := newTestApp(t)
 	rs := routes(a)
 	if len(rs) == 0 {
 		t.Fatal("routes() returned empty list")
@@ -96,7 +101,7 @@ func TestRoutesList(t *testing.T) {
 }
 
 func TestRouterImplementsInterface(t *testing.T) {
-	a := newTestApp()
+	a := newTestApp(t)
 	r := Router(a)
 
 	var _ rtr.RouterInterface = r

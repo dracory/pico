@@ -11,8 +11,8 @@ func setRequiredEnv(t *testing.T) {
 	t.Setenv(KEY_APP_HOST, "localhost")
 	t.Setenv(KEY_APP_PORT, "8080")
 	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
-	t.Setenv(KEY_DB_DRIVER, "sqlite")
-	t.Setenv(KEY_DB_DATABASE, ":memory:")
+	t.Setenv(KEY_DEFAULT_DB_DRIVER, "sqlite")
+	t.Setenv(KEY_DEFAULT_DB_DATABASE, ":memory:")
 }
 
 func TestNew(t *testing.T) {
@@ -40,8 +40,8 @@ func TestNewFromEnv_Success(t *testing.T) {
 	if cfg.GetAppPort() != "8080" {
 		t.Errorf("expected port=8080, got %s", cfg.GetAppPort())
 	}
-	if cfg.GetDatabaseDriver() != "sqlite" {
-		t.Errorf("expected driver=sqlite, got %s", cfg.GetDatabaseDriver())
+	if cfg.GetDatabaseConnectionByName("default").GetDriver() != "sqlite" {
+		t.Errorf("expected driver=sqlite, got %s", cfg.GetDatabaseConnectionByName("default").GetDriver())
 	}
 }
 
@@ -49,8 +49,8 @@ func TestNewFromEnv_MissingRequiredFields(t *testing.T) {
 	t.Setenv(KEY_APP_HOST, "")
 	t.Setenv(KEY_APP_PORT, "")
 	t.Setenv(KEY_APP_ENVIRONMENT, "")
-	t.Setenv(KEY_DB_DRIVER, "")
-	t.Setenv(KEY_DB_DATABASE, "")
+	t.Setenv(KEY_DEFAULT_DB_DRIVER, "")
+	t.Setenv(KEY_DEFAULT_DB_DATABASE, "")
 
 	_, err := NewFromEnv()
 	if err == nil {
@@ -71,8 +71,8 @@ func TestNewFromEnv_PostgresMissingConnectionDetails(t *testing.T) {
 	t.Setenv(KEY_APP_HOST, "localhost")
 	t.Setenv(KEY_APP_PORT, "8080")
 	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
-	t.Setenv(KEY_DB_DRIVER, "postgres")
-	t.Setenv(KEY_DB_DATABASE, "testdb")
+	t.Setenv(KEY_DEFAULT_DB_DRIVER, "postgres")
+	t.Setenv(KEY_DEFAULT_DB_DATABASE, "testdb")
 	_, err := NewFromEnv()
 	if err == nil {
 		t.Fatal("NewFromEnv() should fail when postgres driver missing connection details")
@@ -153,17 +153,18 @@ func TestDatabaseConfig_SQLite(t *testing.T) {
 		t.Fatalf("NewFromEnv() error: %v", err)
 	}
 
-	if cfg.GetDatabaseDriver() != "sqlite" {
-		t.Errorf("expected driver sqlite, got %q", cfg.GetDatabaseDriver())
+	conn := cfg.GetDatabaseConnectionByName("default")
+	if conn.GetDriver() != "sqlite" {
+		t.Errorf("expected driver sqlite, got %q", conn.GetDriver())
 	}
-	if cfg.GetDatabaseName() != ":memory:" {
-		t.Errorf("expected database :memory:, got %q", cfg.GetDatabaseName())
+	if conn.GetDatabase() != ":memory:" {
+		t.Errorf("expected database :memory:, got %q", conn.GetDatabase())
 	}
-	if cfg.GetDatabaseMaxOpenConns() != 1 {
-		t.Errorf("expected max open conns 1 for sqlite, got %d", cfg.GetDatabaseMaxOpenConns())
+	if conn.GetMaxOpenConns() != 1 {
+		t.Errorf("expected max open conns 1 for sqlite, got %d", conn.GetMaxOpenConns())
 	}
-	if cfg.GetDatabaseMaxIdleConns() != 1 {
-		t.Errorf("expected max idle conns 1 for sqlite, got %d", cfg.GetDatabaseMaxIdleConns())
+	if conn.GetMaxIdleConns() != 1 {
+		t.Errorf("expected max idle conns 1 for sqlite, got %d", conn.GetMaxIdleConns())
 	}
 	if cfg.GetDatabaseDefaultConnection() != "default" {
 		t.Errorf("expected default connection 'default', got %q", cfg.GetDatabaseDefaultConnection())
@@ -174,61 +175,63 @@ func TestDatabaseConfig_Postgres(t *testing.T) {
 	t.Setenv(KEY_APP_HOST, "localhost")
 	t.Setenv(KEY_APP_PORT, "8080")
 	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
-	t.Setenv(KEY_DB_DRIVER, "postgres")
-	t.Setenv(KEY_DB_HOST, "localhost")
-	t.Setenv(KEY_DB_PORT, "5432")
-	t.Setenv(KEY_DB_DATABASE, "picodb")
-	t.Setenv(KEY_DB_USERNAME, "user")
-	t.Setenv(KEY_DB_PASSWORD, "pass")
+	t.Setenv(KEY_DEFAULT_DB_DRIVER, "postgres")
+	t.Setenv(KEY_DEFAULT_DB_HOST, "localhost")
+	t.Setenv(KEY_DEFAULT_DB_PORT, "5432")
+	t.Setenv(KEY_DEFAULT_DB_DATABASE, "picodb")
+	t.Setenv(KEY_DEFAULT_DB_USERNAME, "user")
+	t.Setenv(KEY_DEFAULT_DB_PASSWORD, "pass")
 	cfg, err := NewFromEnv()
 	if err != nil {
 		t.Fatalf("NewFromEnv() error: %v", err)
 	}
 
-	if cfg.GetDatabaseDriver() != "postgres" {
-		t.Errorf("expected driver postgres, got %q", cfg.GetDatabaseDriver())
+	conn := cfg.GetDatabaseConnectionByName("default")
+	if conn.GetDriver() != "postgres" {
+		t.Errorf("expected driver postgres, got %q", conn.GetDriver())
 	}
-	if cfg.GetDatabaseMaxOpenConns() != 25 {
-		t.Errorf("expected max open conns 25 for postgres, got %d", cfg.GetDatabaseMaxOpenConns())
+	if conn.GetMaxOpenConns() != 25 {
+		t.Errorf("expected max open conns 25 for postgres, got %d", conn.GetMaxOpenConns())
 	}
-	if cfg.GetDatabaseMaxIdleConns() != 5 {
-		t.Errorf("expected max idle conns 5 for postgres, got %d", cfg.GetDatabaseMaxIdleConns())
+	if conn.GetMaxIdleConns() != 5 {
+		t.Errorf("expected max idle conns 5 for postgres, got %d", conn.GetMaxIdleConns())
 	}
-	if cfg.GetDatabaseSSLMode() != "require" {
-		t.Errorf("expected ssl mode require, got %q", cfg.GetDatabaseSSLMode())
+	if conn.GetSSLMode() != "require" {
+		t.Errorf("expected ssl mode require, got %q", conn.GetSSLMode())
 	}
 }
 
 func TestDatabaseConfig_CustomPoolSettings(t *testing.T) {
 	setRequiredEnv(t)
-	t.Setenv(KEY_DB_MAX_OPEN_CONNS, "10")
-	t.Setenv(KEY_DB_MAX_IDLE_CONNS, "5")
-	t.Setenv(KEY_DB_CONN_MAX_LIFETIME_SECONDS, "600")
-	t.Setenv(KEY_DB_CONN_MAX_IDLE_TIME_SECONDS, "60")
-	t.Setenv(KEY_DB_CHARSET, "utf8")
-	t.Setenv(KEY_DB_TIMEZONE, "America/New_York")
+	t.Setenv(KEY_DEFAULT_DB_MAX_OPEN_CONNS, "10")
+	t.Setenv(KEY_DEFAULT_DB_MAX_IDLE_CONNS, "5")
+	t.Setenv(KEY_DEFAULT_DB_CONN_MAX_LIFETIME_SECONDS, "600")
+	t.Setenv(KEY_DEFAULT_DB_CONN_MAX_IDLE_TIME_SECONDS, "60")
+	t.Setenv(KEY_DEFAULT_DB_CHARSET, "utf8")
+	t.Setenv(KEY_DEFAULT_DB_TIMEZONE, "America/New_York")
 	cfg, err := NewFromEnv()
 	if err != nil {
 		t.Fatalf("NewFromEnv() failed: %v", err)
 	}
 
-	if cfg.GetDatabaseMaxOpenConns() != 1 {
-		t.Errorf("expected max open conns 1 for sqlite override, got %d", cfg.GetDatabaseMaxOpenConns())
+	conn := cfg.GetDatabaseConnectionByName("default")
+	if conn.GetMaxOpenConns() != 1 {
+		t.Errorf("expected max open conns 1 for sqlite override, got %d", conn.GetMaxOpenConns())
 	}
-	if cfg.GetDatabaseMaxIdleConns() != 1 {
-		t.Errorf("expected max idle conns 1 for sqlite override, got %d", cfg.GetDatabaseMaxIdleConns())
+	if conn.GetMaxIdleConns() != 1 {
+		t.Errorf("expected max idle conns 1 for sqlite override, got %d", conn.GetMaxIdleConns())
 	}
-	if cfg.GetDatabaseConnMaxLifetimeSeconds() != 30 {
-		t.Errorf("expected conn max lifetime 30 for sqlite override, got %d", cfg.GetDatabaseConnMaxLifetimeSeconds())
+	if conn.GetConnMaxLifetimeSeconds() != 30 {
+		t.Errorf("expected conn max lifetime 30 for sqlite override, got %d", conn.GetConnMaxLifetimeSeconds())
 	}
-	if cfg.GetDatabaseConnMaxIdleTimeSeconds() != 60 {
-		t.Errorf("expected conn max idle time 60, got %d", cfg.GetDatabaseConnMaxIdleTimeSeconds())
+	if conn.GetConnMaxIdleTimeSeconds() != 60 {
+		t.Errorf("expected conn max idle time 60, got %d", conn.GetConnMaxIdleTimeSeconds())
 	}
-	if cfg.GetDatabaseCharset() != "utf8" {
-		t.Errorf("expected charset utf8, got %q", cfg.GetDatabaseCharset())
+	if conn.GetCharset() != "utf8" {
+		t.Errorf("expected charset utf8, got %q", conn.GetCharset())
 	}
-	if cfg.GetDatabaseTimezone() != "America/New_York" {
-		t.Errorf("expected timezone America/New_York, got %q", cfg.GetDatabaseTimezone())
+	if conn.GetTimezone() != "America/New_York" {
+		t.Errorf("expected timezone America/New_York, got %q", conn.GetTimezone())
 	}
 }
 
@@ -288,76 +291,6 @@ func TestSetters(t *testing.T) {
 	}
 	if cfg.GetAppDebug() {
 		t.Error("expected debug false")
-	}
-}
-
-func TestDatabaseSetters(t *testing.T) {
-	cfg := New()
-
-	cfg.SetDatabaseDriver("mysql")
-	cfg.SetDatabaseHost("dbhost")
-	cfg.SetDatabasePort("3306")
-	cfg.SetDatabaseName("mydb")
-	cfg.SetDatabaseUsername("dbuser")
-	cfg.SetDatabasePassword("dbpass")
-	cfg.SetDatabaseSSLMode("require")
-	cfg.SetDatabaseCharset("utf8mb4")
-	cfg.SetDatabaseTimezone("Europe/London")
-	cfg.SetDatabaseDSN("dsn://connection")
-	cfg.SetDatabasePrefix("bp_")
-	cfg.SetDatabaseMaxOpenConns(50)
-	cfg.SetDatabaseMaxIdleConns(10)
-	cfg.SetDatabaseConnMaxLifetimeSeconds(120)
-	cfg.SetDatabaseConnMaxIdleTimeSeconds(30)
-	cfg.SetDatabaseDefaultConnection("custom")
-
-	if cfg.GetDatabaseDriver() != "mysql" {
-		t.Errorf("expected mysql, got %q", cfg.GetDatabaseDriver())
-	}
-	if cfg.GetDatabaseHost() != "dbhost" {
-		t.Errorf("expected dbhost, got %q", cfg.GetDatabaseHost())
-	}
-	if cfg.GetDatabasePort() != "3306" {
-		t.Errorf("expected 3306, got %q", cfg.GetDatabasePort())
-	}
-	if cfg.GetDatabaseName() != "mydb" {
-		t.Errorf("expected mydb, got %q", cfg.GetDatabaseName())
-	}
-	if cfg.GetDatabaseUsername() != "dbuser" {
-		t.Errorf("expected dbuser, got %q", cfg.GetDatabaseUsername())
-	}
-	if cfg.GetDatabasePassword() != "dbpass" {
-		t.Errorf("expected dbpass, got %q", cfg.GetDatabasePassword())
-	}
-	if cfg.GetDatabaseSSLMode() != "require" {
-		t.Errorf("expected require, got %q", cfg.GetDatabaseSSLMode())
-	}
-	if cfg.GetDatabaseCharset() != "utf8mb4" {
-		t.Errorf("expected utf8mb4, got %q", cfg.GetDatabaseCharset())
-	}
-	if cfg.GetDatabaseTimezone() != "Europe/London" {
-		t.Errorf("expected Europe/London, got %q", cfg.GetDatabaseTimezone())
-	}
-	if cfg.GetDatabaseDSN() != "dsn://connection" {
-		t.Errorf("expected dsn://connection, got %q", cfg.GetDatabaseDSN())
-	}
-	if cfg.GetDatabasePrefix() != "bp_" {
-		t.Errorf("expected bp_, got %q", cfg.GetDatabasePrefix())
-	}
-	if cfg.GetDatabaseMaxOpenConns() != 50 {
-		t.Errorf("expected 50, got %d", cfg.GetDatabaseMaxOpenConns())
-	}
-	if cfg.GetDatabaseMaxIdleConns() != 10 {
-		t.Errorf("expected 10, got %d", cfg.GetDatabaseMaxIdleConns())
-	}
-	if cfg.GetDatabaseConnMaxLifetimeSeconds() != 120 {
-		t.Errorf("expected 120, got %d", cfg.GetDatabaseConnMaxLifetimeSeconds())
-	}
-	if cfg.GetDatabaseConnMaxIdleTimeSeconds() != 30 {
-		t.Errorf("expected 30, got %d", cfg.GetDatabaseConnMaxIdleTimeSeconds())
-	}
-	if cfg.GetDatabaseDefaultConnection() != "custom" {
-		t.Errorf("expected custom, got %q", cfg.GetDatabaseDefaultConnection())
 	}
 }
 

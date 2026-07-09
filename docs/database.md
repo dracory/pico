@@ -125,11 +125,7 @@ The neat database provides higher-level query building and connection management
 
 ## Multi-Connection Support
 
-Pico supports named database connections. The default connection is named `"default"` but can be customized:
-
-```env
-DB_DEFAULT_CONNECTION=primary
-```
+Pico supports named database connections. The default connection is named `"default"` and can be renamed programmatically via `SetDatabaseDefaultConnection()`.
 
 Access connections programmatically:
 
