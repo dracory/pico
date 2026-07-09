@@ -1,0 +1,39 @@
+version: '3'
+
+vars:
+  APP_NAME: pico
+
+tasks:
+  dev:
+    desc: Run the server
+    cmds:
+      - go run ./cmd/server
+
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o bin/{{.APP_NAME}}.exe ./cmd/server
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  cover:
+    desc: Run tests with coverage
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out
+
+  tidy:
+    desc: Tidy go modules
+    cmds:
+      - go mod tidy
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - cmd: del /q bin\*.exe 2>nul
+        ignore_error: true
+      - cmd: del /q *.db *.db-shm *.db-wal 2>nul
+        ignore_error: true
