@@ -11,7 +11,10 @@ Pico uses the [dracory/neat](https://github.com/dracory/neat) database layer, wh
 | SQLite | `modernc.org/sqlite` | — |
 | Turso | `tursodatabase/libsql-client-go` | — |
 | MySQL | (via neat) | `3306` |
+| MariaDB | (via neat) | `3306` |
 | PostgreSQL | (via neat) | `5432` |
+| Oracle | (via neat) | `1521` |
+| SQL Server | (via neat) | `1433` |
 
 SQLite uses `modernc.org/sqlite`, a pure Go implementation — no CGO required.
 Turso uses `libsql-client-go` for remote access to Turso Cloud over the libSQL wire protocol — also pure Go, no CGO required.
