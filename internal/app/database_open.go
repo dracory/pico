@@ -16,5 +16,11 @@ func databaseOpen(cfg config.ConfigInterface) (*neatdatabase.Database, error) {
 	}
 
 	neatCfg := config.DatabaseNeatConfig(cfg)
-	return neatdatabase.New(neatCfg)
+
+	opts := []neatdatabase.Option{}
+	if cfg.GetAppDebug() {
+		opts = append(opts, neatdatabase.WithDebug())
+	}
+
+	return neatdatabase.New(neatCfg, opts...)
 }

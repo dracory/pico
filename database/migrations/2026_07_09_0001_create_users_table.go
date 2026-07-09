@@ -37,6 +37,7 @@ func (m *CreateUsersTable) Up() error {
 		table.String("role").Default("user")
 		table.String("status").Default("active")
 		table.Timestamps()
+		table.SoftDeletes()
 	})
 }
 

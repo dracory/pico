@@ -3,6 +3,7 @@ package seeders
 import (
 	"errors"
 
+	"project/database/models"
 	"project/internal/app"
 
 	contractsSeeder "github.com/dracory/neat/contracts/database/seeder"
@@ -36,28 +37,23 @@ func (s *UserSeeder) Run() error {
 
 	query := neatDB.Query()
 
-	users := []map[string]any{
-		{
-			"name":     "Admin User",
-			"email":    "admin@example.com",
-			"password": "$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q",
-			"role":     "administrator",
-			"status":   "active",
-		},
-		{
-			"name":     "Test User",
-			"email":    "user@example.com",
-			"password": "$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q",
-			"role":     "user",
-			"status":   "active",
-		},
+	seedUsers := []*models.User{
+		models.NewUser().
+			SetName("Admin User").
+			SetEmail("admin@example.com").
+			SetPassword("$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q").
+			SetRole(models.USER_ROLE_ADMINISTRATOR).
+			SetStatus(models.USER_STATUS_ACTIVE),
+		models.NewUser().
+			SetName("Test User").
+			SetEmail("user@example.com").
+			SetPassword("$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q").
+			SetRole(models.USER_ROLE_USER).
+			SetStatus(models.USER_STATUS_ACTIVE),
 	}
 
-	for _, user := range users {
-		err := query.Table("users").UpdateOrInsert(
-			map[string]any{"email": user["email"]},
-			user,
-		)
+	for _, u := range seedUsers {
+		err := query.Model(u).FirstOrCreate(u, "email = ?", u.Email)
 		if err != nil {
 			return err
 		}
