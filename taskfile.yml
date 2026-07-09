@@ -5,9 +5,9 @@ vars:
 
 tasks:
   dev:
-    desc: Run the server
+    desc: "Run the server with hot reload (requires air: go install github.com/air-verse/air@latest)"
     cmds:
-      - go run ./cmd/server
+      - air
 
   build:
     desc: Build the binary

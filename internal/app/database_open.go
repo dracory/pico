@@ -6,6 +6,7 @@ import (
 	"project/internal/config"
 
 	neatdatabase "github.com/dracory/neat/database"
+	_ "modernc.org/sqlite"
 )
 
 func databaseOpen(cfg config.ConfigInterface) (*neatdatabase.Database, error) {

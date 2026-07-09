@@ -26,5 +26,11 @@
 .DS_Store
 Thumbs.db
 
+# Test coverage
+coverage.out
+cov.out
+cov
+coverage
+
 # Cache
 .cache/
