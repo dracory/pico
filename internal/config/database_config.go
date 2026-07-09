@@ -20,17 +20,17 @@ func databaseConfig(env *envValidator) databaseSettings {
 	prefix := env.GetString(KEY_DB_PREFIX)
 
 	maxOpenConns := env.GetIntOrDefault(KEY_DB_MAX_OPEN_CONNS, 25)
-	if driver == driverSQLite {
+	if isSQLiteLike(driver) {
 		maxOpenConns = 1
 	}
 
 	maxIdleConns := env.GetIntOrDefault(KEY_DB_MAX_IDLE_CONNS, 5)
-	if driver == driverSQLite {
+	if isSQLiteLike(driver) {
 		maxIdleConns = 1
 	}
 
 	connMaxLifetime := time.Duration(env.GetIntOrDefault(KEY_DB_CONN_MAX_LIFETIME_SECONDS, 300)) * time.Second
-	if driver == driverSQLite {
+	if isSQLiteLike(driver) {
 		connMaxLifetime = 30 * time.Second
 	}
 
@@ -40,11 +40,11 @@ func databaseConfig(env *envValidator) databaseSettings {
 	timezone := env.GetStringOrDefault(KEY_DB_TIMEZONE, "UTC")
 
 	sslMode := env.GetStringOrDefault(KEY_DB_SSL_MODE, "require")
-	if driver == driverSQLite {
+	if isSQLiteLike(driver) {
 		sslMode = ""
 	}
 
-	if driver != driverSQLite {
+	if !isSQLiteLike(driver) {
 		env.RequireWhen(true, KEY_DB_HOST, "required when `DB_DRIVER` is not sqlite", host)
 		env.RequireWhen(true, KEY_DB_PORT, "required when `DB_DRIVER` is not sqlite", port)
 		env.RequireWhen(true, KEY_DB_USERNAME, "required when `DB_DRIVER` is not sqlite", user)
@@ -209,6 +209,10 @@ func connectionNeatConfig(conn DatabaseConnectionConfigInterface) db.ConnectionC
 		Prefix:   conn.GetPrefix(),
 		Port:     portToInt(conn.GetPort(), driver),
 	}
+}
+
+func isSQLiteLike(driver string) bool {
+	return driver == driverSQLite || driver == driverTurso
 }
 
 func portToInt(port, driver string) int {

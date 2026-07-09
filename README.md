@@ -47,7 +47,7 @@ The server starts at `http://localhost:8080` by default.
 | `APP_HOST` | — | Listen host (e.g., `0.0.0.0`) |
 | `APP_PORT` | — | Listen port (e.g., `8080`) |
 | `APP_URL` | `http://localhost:8080` | Application URL |
-| `DB_DRIVER` | — | Database driver: `sqlite`, `mysql`, `postgres` |
+| `DB_DRIVER` | — | Database driver: `sqlite`, `turso`, `mysql`, `postgres` |
 | `DB_DATABASE` | — | Database name or file path |
 | `DB_HOST` | — | Database host (not required for SQLite) |
 | `DB_PORT` | — | Database port (not required for SQLite) |

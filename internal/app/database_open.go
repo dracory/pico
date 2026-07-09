@@ -6,6 +6,7 @@ import (
 	"project/internal/config"
 
 	neatdatabase "github.com/dracory/neat/database"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
 

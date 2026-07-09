@@ -8,11 +8,14 @@ require (
 	github.com/dracory/rtr v1.6.0
 	github.com/dracory/websrv v0.1.0
 	github.com/lmittmann/tint v1.1.3
+	github.com/tursodatabase/libsql-client-go v0.0.0-20260528064733-9d5d30a29a60
 	modernc.org/sqlite v1.53.0
 )
 
 require (
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+	github.com/coder/websocket v1.8.14 // indirect
 	github.com/dracory/api v1.7.0 // indirect
 	github.com/dracory/cdn v1.11.0 // indirect
 	github.com/dracory/crypto v0.3.0 // indirect

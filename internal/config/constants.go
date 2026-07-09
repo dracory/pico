@@ -7,6 +7,7 @@ const APP_ENVIRONMENT_STAGING = "staging"
 const APP_ENVIRONMENT_TESTING = "testing"
 
 const driverSQLite = "sqlite"
+const driverTurso = "turso"
 
 const KEY_APP_DEBUG = "APP_DEBUG"
 const KEY_APP_ENVIRONMENT = "APP_ENV"
