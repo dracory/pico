@@ -1,11 +1,40 @@
 package config
 
+// appConfig reads application configuration from environment variables.
 func appConfig(env *envValidator) appSettings {
+	// Application Name
+	//
+	// This value is the name of your application, used in notifications
+	// and other places where the application name is displayed.
 	name := env.GetStringOrDefault(KEY_APP_NAME, "Pico")
+
+	// Application URL
+	//
+	// The base URL of your application, used for generating links.
+	// Example: https://example.com
 	url := env.GetStringOrDefault(KEY_APP_URL, "http://localhost:8080")
+
+	// Application Host
+	//
+	// The host address the server will listen on.
+	// Example: 0.0.0.0 (all interfaces) or 127.0.0.1 (localhost only)
 	host := env.GetStringOrError(KEY_APP_HOST, "set the application host address")
+
+	// Application Port
+	//
+	// The port the server will listen on.
+	// Example: 8080
 	port := env.GetStringOrError(KEY_APP_PORT, "set the application port")
+
+	// Application Environment
+	//
+	// Determines the environment your application is running in.
+	// Supported values: local, development, staging, testing, production
 	appEnv := env.GetStringOrError(KEY_APP_ENVIRONMENT, "set the application environment")
+
+	// Application Debug Mode
+	//
+	// When enabled, detailed error messages are shown. Disable in production.
 	debug := env.GetBool(KEY_APP_DEBUG)
 
 	return appSettings{
@@ -18,6 +47,7 @@ func appConfig(env *envValidator) appSettings {
 	}
 }
 
+// appSettings holds the application-level configuration values.
 type appSettings struct {
 	name  string
 	url   string

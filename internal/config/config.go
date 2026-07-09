@@ -4,13 +4,25 @@ import (
 	"github.com/dracory/env"
 )
 
+// envValidator is a local alias for env.Validator for use in config loaders.
 type envValidator = env.Validator
 
+// ============================================================================
+// Main Config Interface
+// ============================================================================
+
+// ConfigInterface defines the contract for application configuration.
+// It composes all domain-specific configuration interfaces.
 type ConfigInterface interface {
 	AppConfigInterface
 	DatabaseConfigInterface
 }
 
+// ============================================================================
+// App Config Interface
+// ============================================================================
+
+// AppConfigInterface defines application-level configuration methods.
 type AppConfigInterface interface {
 	SetAppName(string)
 	GetAppName() string
@@ -30,6 +42,7 @@ type AppConfigInterface interface {
 	SetAppDebug(bool)
 	GetAppDebug() bool
 
+	// Environment helpers
 	IsEnvDevelopment() bool
 	IsEnvLocal() bool
 	IsEnvProduction() bool
@@ -37,6 +50,13 @@ type AppConfigInterface interface {
 	IsEnvTesting() bool
 }
 
+// ============================================================================
+// Database Connection Config Interface
+// ============================================================================
+
+// DatabaseConnectionConfigInterface defines a single database connection.
+// It provides a Laravel-like connection configuration while keeping
+// compatibility with the existing single-database getters.
 type DatabaseConnectionConfigInterface interface {
 	GetName() string
 	GetDriver() string
@@ -56,6 +76,12 @@ type DatabaseConnectionConfigInterface interface {
 	GetConnMaxIdleTimeSeconds() int
 }
 
+// ============================================================================
+// Database Config Interface
+// ============================================================================
+
+// DatabaseConfigInterface defines database configuration methods.
+// It supports multi-connection configuration via DatabaseConnectionConfigInterface.
 type DatabaseConfigInterface interface {
 	SetDatabaseDefaultConnection(string)
 	GetDatabaseDefaultConnection() string
@@ -64,7 +90,9 @@ type DatabaseConfigInterface interface {
 	GetDatabaseConnectionByName(name string) DatabaseConnectionConfigInterface
 }
 
+// configImplementation holds all configuration values.
 type configImplementation struct {
+	// App configuration
 	appName  string
 	appEnv   string
 	appHost  string
@@ -72,13 +100,16 @@ type configImplementation struct {
 	appUrl   string
 	appDebug bool
 
+	// Database configuration
 	databaseConnections map[string]DatabaseConnectionConfigInterface
 }
 
+// New constructs a new configuration instance.
 func New() ConfigInterface {
 	return &configImplementation{}
 }
 
+// NewFromEnv constructs a configuration instance populated from environment variables.
 func NewFromEnv() (ConfigInterface, error) {
 	env.Load(".env")
 
@@ -95,7 +126,12 @@ func NewFromEnv() (ConfigInterface, error) {
 	return cfg, nil
 }
 
+// Ensure configImplementation satisfies ConfigInterface
 var _ ConfigInterface = (*configImplementation)(nil)
+
+// ============================================================================
+// App Config Implementation
+// ============================================================================
 
 func (c *configImplementation) setAppConfig(s appSettings) {
 	c.appName = s.name
@@ -107,33 +143,49 @@ func (c *configImplementation) setAppConfig(s appSettings) {
 }
 
 func (c *configImplementation) SetAppName(v string) { c.appName = v }
-func (c *configImplementation) GetAppName() string  { return c.appName }
+
+func (c *configImplementation) GetAppName() string { return c.appName }
 
 func (c *configImplementation) SetAppEnv(v string) { c.appEnv = v }
-func (c *configImplementation) GetAppEnv() string  { return c.appEnv }
+
+func (c *configImplementation) GetAppEnv() string { return c.appEnv }
 
 func (c *configImplementation) SetAppHost(v string) { c.appHost = v }
-func (c *configImplementation) GetAppHost() string  { return c.appHost }
+
+func (c *configImplementation) GetAppHost() string { return c.appHost }
 
 func (c *configImplementation) SetAppPort(v string) { c.appPort = v }
-func (c *configImplementation) GetAppPort() string  { return c.appPort }
+
+func (c *configImplementation) GetAppPort() string { return c.appPort }
 
 func (c *configImplementation) SetAppUrl(v string) { c.appUrl = v }
-func (c *configImplementation) GetAppUrl() string  { return c.appUrl }
+
+func (c *configImplementation) GetAppUrl() string { return c.appUrl }
 
 func (c *configImplementation) SetAppDebug(v bool) { c.appDebug = v }
-func (c *configImplementation) GetAppDebug() bool  { return c.appDebug }
+
+func (c *configImplementation) GetAppDebug() bool { return c.appDebug }
 
 func (c *configImplementation) IsEnvDevelopment() bool { return c.appEnv == "development" }
-func (c *configImplementation) IsEnvLocal() bool       { return c.appEnv == "local" }
-func (c *configImplementation) IsEnvProduction() bool  { return c.appEnv == "production" }
-func (c *configImplementation) IsEnvStaging() bool     { return c.appEnv == "staging" }
-func (c *configImplementation) IsEnvTesting() bool     { return c.appEnv == "testing" }
+
+func (c *configImplementation) IsEnvLocal() bool { return c.appEnv == "local" }
+
+func (c *configImplementation) IsEnvProduction() bool { return c.appEnv == "production" }
+
+func (c *configImplementation) IsEnvStaging() bool { return c.appEnv == "staging" }
+
+func (c *configImplementation) IsEnvTesting() bool { return c.appEnv == "testing" }
+
+// ============================================================================
+// Database Config Implementation
+// ============================================================================
 
 func (c *configImplementation) setDatabaseConfig(conns map[string]DatabaseConnectionConfigInterface) {
 	c.databaseConnections = conns
 }
 
+// defaultConnection returns the default database connection configuration.
+// It falls back to nil if no connections are configured.
 func (c *configImplementation) defaultConnection() DatabaseConnectionConfigInterface {
 	if c == nil {
 		return nil
@@ -146,6 +198,7 @@ func (c *configImplementation) defaultConnection() DatabaseConnectionConfigInter
 	return nil
 }
 
+// ensureDefaultConnection returns the default connection, creating one if none exists.
 func (c *configImplementation) ensureDefaultConnection() *databaseConnectionSettings {
 	if c.databaseConnections == nil {
 		c.databaseConnections = map[string]DatabaseConnectionConfigInterface{}

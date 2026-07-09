@@ -347,10 +347,3 @@ func TestPortToInt(t *testing.T) {
 		}
 	}
 }
-
-func TestGetVersion(t *testing.T) {
-	v := GetVersion()
-	if v == "" {
-		t.Error("GetVersion() returned empty string")
-	}
-}

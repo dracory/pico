@@ -25,7 +25,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Starting %s v%s\n", cfg.GetAppName(), config.GetVersion())
+	fmt.Printf("Starting %s v%s\n", cfg.GetAppName(), config.Version)
 
 	a, err := app.New(cfg)
 	if err != nil {
