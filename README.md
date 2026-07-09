@@ -48,11 +48,20 @@ The server starts at `http://localhost:8080` by default.
 | `APP_PORT` | — | Listen port (e.g., `8080`) |
 | `APP_URL` | `http://localhost:8080` | Application URL |
 | `DB_DRIVER` | — | Database driver: `sqlite`, `turso`, `mysql`, `mariadb`, `postgres`, `oracle`, `sqlserver` |
-| `DB_DATABASE` | — | Database name or file path |
+| `DB_DATABASE` | — | Database name, file path (SQLite), or libsql URL (Turso) |
 | `DB_HOST` | — | Database host (not required for SQLite) |
 | `DB_PORT` | — | Database port (not required for SQLite) |
 | `DB_USERNAME` | — | Database username (not required for SQLite) |
 | `DB_PASSWORD` | — | Database password (not required for SQLite) |
+| `DB_SSL_MODE` | `require` | SSL mode (PostgreSQL only) |
+| `DB_CHARSET` | `utf8mb4` | Character set (MySQL only) |
+| `DB_TIMEZONE` | `UTC` | Database timezone |
+| `DB_DSN` | — | Direct DSN override (optional) |
+| `DB_PREFIX` | — | Table prefix (optional) |
+| `DB_MAX_OPEN_CONNS` | `25` | Max open connections (SQLite/Turso: `1`) |
+| `DB_MAX_IDLE_CONNS` | `5` | Max idle connections (SQLite/Turso: `1`) |
+| `DB_CONN_MAX_LIFETIME_SECONDS` | `300` | Max connection lifetime in seconds (SQLite/Turso: `30`) |
+| `DB_CONN_MAX_IDLE_TIME_SECONDS` | `5` | Max connection idle time in seconds |
 
 ## Project Structure
 
@@ -67,12 +76,11 @@ pico/
 │   │   ├── app_implementation.go # App implementation
 │   │   └── database_open.go     # Database connection
 │   ├── config/
-│   │   ├── config_interfaces.go  # ConfigInterface
-│   │   ├── config_implementation.go # Config implementation
-│   │   ├── app_config.go         # App config loader
-│   │   ├── database_config.go    # Database config loader
-│   │   ├── constants.go          # Environment variable keys
-│   │   └── version.go            # Version
+│   │   ├── config.go            # ConfigInterface + implementation
+│   │   ├── app_config.go        # App config loader
+│   │   ├── database_config.go   # Database config loader
+│   │   ├── constants.go         # Environment variable keys
+│   │   └── version.go           # Version
 │   └── routes/
 │       └── router.go            # Router + minimal middleware
 ├── .env.example
