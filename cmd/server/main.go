@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"project/database/migrations"
+	"project/database/seeders"
 	"project/internal/app"
 	"project/internal/config"
 	"project/internal/routes"
@@ -35,6 +37,16 @@ func main() {
 			slog.Error("Failed to close app", "error", err)
 		}
 	}()
+
+	if err := migrations.MigrateAll(a); err != nil {
+		fmt.Printf("Failed to run migrations: %v\n", err)
+		return
+	}
+
+	if err := seeders.SeedAll(a); err != nil {
+		fmt.Printf("Failed to run seeders: %v\n", err)
+		return
+	}
 
 	server, err := websrv.Start(websrv.Options{
 		Host:    cfg.GetAppHost(),
