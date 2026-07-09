@@ -1,18 +1,16 @@
 package config
 
 import (
-	"os"
 	"testing"
+
+	"github.com/dracory/env"
 )
 
-func setTestEnv(t *testing.T) {
+func setRequiredEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv(KEY_APP_NAME, "PicoTest")
-	t.Setenv(KEY_APP_ENVIRONMENT, APP_ENVIRONMENT_TESTING)
-	t.Setenv(KEY_APP_DEBUG, "true")
-	t.Setenv(KEY_APP_HOST, "127.0.0.1")
+	t.Setenv(KEY_APP_HOST, "localhost")
 	t.Setenv(KEY_APP_PORT, "8080")
-	t.Setenv(KEY_APP_URL, "http://localhost:8080")
+	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
 	t.Setenv(KEY_DB_DRIVER, "sqlite")
 	t.Setenv(KEY_DB_DATABASE, ":memory:")
 }
@@ -27,49 +25,102 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestNewFromEnv(t *testing.T) {
-	setTestEnv(t)
-
+func TestNewFromEnv_Success(t *testing.T) {
+	setRequiredEnv(t)
 	cfg, err := NewFromEnv()
 	if err != nil {
-		t.Fatalf("NewFromEnv() error: %v", err)
+		t.Fatalf("NewFromEnv() failed: %v", err)
 	}
 	if cfg == nil {
 		t.Fatal("NewFromEnv() returned nil config")
 	}
-
-	if cfg.GetAppName() != "PicoTest" {
-		t.Errorf("expected app name PicoTest, got %q", cfg.GetAppName())
-	}
-	if cfg.GetAppEnv() != APP_ENVIRONMENT_TESTING {
-		t.Errorf("expected env testing, got %q", cfg.GetAppEnv())
-	}
-	if cfg.GetAppHost() != "127.0.0.1" {
-		t.Errorf("expected host 127.0.0.1, got %q", cfg.GetAppHost())
+	if cfg.GetAppHost() != "localhost" {
+		t.Errorf("expected host=localhost, got %s", cfg.GetAppHost())
 	}
 	if cfg.GetAppPort() != "8080" {
-		t.Errorf("expected port 8080, got %q", cfg.GetAppPort())
+		t.Errorf("expected port=8080, got %s", cfg.GetAppPort())
 	}
-	if cfg.GetAppUrl() != "http://localhost:8080" {
-		t.Errorf("expected url http://localhost:8080, got %q", cfg.GetAppUrl())
-	}
-	if !cfg.GetAppDebug() {
-		t.Error("expected debug true")
+	if cfg.GetDatabaseDriver() != "sqlite" {
+		t.Errorf("expected driver=sqlite, got %s", cfg.GetDatabaseDriver())
 	}
 }
 
-func TestNewFromEnvMissingRequired(t *testing.T) {
-	os.Clearenv()
+func TestNewFromEnv_MissingRequiredFields(t *testing.T) {
+	t.Setenv(KEY_APP_HOST, "")
+	t.Setenv(KEY_APP_PORT, "")
+	t.Setenv(KEY_APP_ENVIRONMENT, "")
+	t.Setenv(KEY_DB_DRIVER, "")
+	t.Setenv(KEY_DB_DATABASE, "")
 
 	_, err := NewFromEnv()
 	if err == nil {
-		t.Fatal("expected error when required env vars are missing")
+		t.Fatal("NewFromEnv() should fail with missing required fields")
+	}
+
+	verr, ok := err.(env.ValidationError)
+	if !ok {
+		t.Fatalf("expected env.ValidationError, got %T", err)
+	}
+
+	if len(verr.Errors()) == 0 {
+		t.Error("expected validation errors, got none")
+	}
+}
+
+func TestNewFromEnv_PostgresMissingConnectionDetails(t *testing.T) {
+	t.Setenv(KEY_APP_HOST, "localhost")
+	t.Setenv(KEY_APP_PORT, "8080")
+	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
+	t.Setenv(KEY_DB_DRIVER, "postgres")
+	t.Setenv(KEY_DB_DATABASE, "testdb")
+	_, err := NewFromEnv()
+	if err == nil {
+		t.Fatal("NewFromEnv() should fail when postgres driver missing connection details")
+	}
+
+	verr, ok := err.(env.ValidationError)
+	if !ok {
+		t.Fatalf("expected env.ValidationError, got %T", err)
+	}
+
+	if len(verr.Errors()) < 4 {
+		t.Errorf("expected at least 4 validation errors for postgres, got %d", len(verr.Errors()))
+	}
+}
+
+func TestNewFromEnv_AppDebugMode(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv(KEY_APP_DEBUG, "true")
+	cfg, err := NewFromEnv()
+	if err != nil {
+		t.Fatalf("NewFromEnv() failed: %v", err)
+	}
+
+	if !cfg.GetAppDebug() {
+		t.Error("GetAppDebug() = false, want true")
+	}
+}
+
+func TestNewFromEnv_AppNameAndUrl(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv(KEY_APP_NAME, "TestApp")
+	t.Setenv(KEY_APP_URL, "http://test.example.com")
+	cfg, err := NewFromEnv()
+	if err != nil {
+		t.Fatalf("NewFromEnv() failed: %v", err)
+	}
+
+	if cfg.GetAppName() != "TestApp" {
+		t.Errorf("GetAppName() = %q, want TestApp", cfg.GetAppName())
+	}
+	if cfg.GetAppUrl() != "http://test.example.com" {
+		t.Errorf("GetAppUrl() = %q, want http://test.example.com", cfg.GetAppUrl())
 	}
 }
 
 func TestEnvironmentChecks(t *testing.T) {
 	tests := []struct {
-		env  string
+		env   string
 		check func(ConfigInterface) bool
 		name  string
 	}{
@@ -95,9 +146,8 @@ func TestEnvironmentChecks(t *testing.T) {
 	}
 }
 
-func TestDatabaseConfigFromEnv(t *testing.T) {
-	setTestEnv(t)
-
+func TestDatabaseConfig_SQLite(t *testing.T) {
+	setRequiredEnv(t)
 	cfg, err := NewFromEnv()
 	if err != nil {
 		t.Fatalf("NewFromEnv() error: %v", err)
@@ -120,18 +170,16 @@ func TestDatabaseConfigFromEnv(t *testing.T) {
 	}
 }
 
-func TestDatabaseConfigNonSQLite(t *testing.T) {
-	t.Setenv(KEY_APP_NAME, "PicoTest")
-	t.Setenv(KEY_APP_ENVIRONMENT, APP_ENVIRONMENT_TESTING)
-	t.Setenv(KEY_APP_HOST, "127.0.0.1")
+func TestDatabaseConfig_Postgres(t *testing.T) {
+	t.Setenv(KEY_APP_HOST, "localhost")
 	t.Setenv(KEY_APP_PORT, "8080")
+	t.Setenv(KEY_APP_ENVIRONMENT, "testing")
 	t.Setenv(KEY_DB_DRIVER, "postgres")
 	t.Setenv(KEY_DB_HOST, "localhost")
 	t.Setenv(KEY_DB_PORT, "5432")
 	t.Setenv(KEY_DB_DATABASE, "picodb")
 	t.Setenv(KEY_DB_USERNAME, "user")
 	t.Setenv(KEY_DB_PASSWORD, "pass")
-
 	cfg, err := NewFromEnv()
 	if err != nil {
 		t.Fatalf("NewFromEnv() error: %v", err)
@@ -148,6 +196,68 @@ func TestDatabaseConfigNonSQLite(t *testing.T) {
 	}
 	if cfg.GetDatabaseSSLMode() != "require" {
 		t.Errorf("expected ssl mode require, got %q", cfg.GetDatabaseSSLMode())
+	}
+}
+
+func TestDatabaseConfig_CustomPoolSettings(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv(KEY_DB_MAX_OPEN_CONNS, "10")
+	t.Setenv(KEY_DB_MAX_IDLE_CONNS, "5")
+	t.Setenv(KEY_DB_CONN_MAX_LIFETIME_SECONDS, "600")
+	t.Setenv(KEY_DB_CONN_MAX_IDLE_TIME_SECONDS, "60")
+	t.Setenv(KEY_DB_CHARSET, "utf8")
+	t.Setenv(KEY_DB_TIMEZONE, "America/New_York")
+	cfg, err := NewFromEnv()
+	if err != nil {
+		t.Fatalf("NewFromEnv() failed: %v", err)
+	}
+
+	if cfg.GetDatabaseMaxOpenConns() != 1 {
+		t.Errorf("expected max open conns 1 for sqlite override, got %d", cfg.GetDatabaseMaxOpenConns())
+	}
+	if cfg.GetDatabaseMaxIdleConns() != 1 {
+		t.Errorf("expected max idle conns 1 for sqlite override, got %d", cfg.GetDatabaseMaxIdleConns())
+	}
+	if cfg.GetDatabaseConnMaxLifetimeSeconds() != 30 {
+		t.Errorf("expected conn max lifetime 30 for sqlite override, got %d", cfg.GetDatabaseConnMaxLifetimeSeconds())
+	}
+	if cfg.GetDatabaseConnMaxIdleTimeSeconds() != 60 {
+		t.Errorf("expected conn max idle time 60, got %d", cfg.GetDatabaseConnMaxIdleTimeSeconds())
+	}
+	if cfg.GetDatabaseCharset() != "utf8" {
+		t.Errorf("expected charset utf8, got %q", cfg.GetDatabaseCharset())
+	}
+	if cfg.GetDatabaseTimezone() != "America/New_York" {
+		t.Errorf("expected timezone America/New_York, got %q", cfg.GetDatabaseTimezone())
+	}
+}
+
+func TestDatabaseConfig_Connections(t *testing.T) {
+	setRequiredEnv(t)
+	cfg, err := NewFromEnv()
+	if err != nil {
+		t.Fatalf("NewFromEnv() failed: %v", err)
+	}
+
+	conns := cfg.GetDatabaseConnections()
+	if len(conns) == 0 {
+		t.Fatal("expected at least one connection")
+	}
+
+	conn := cfg.GetDatabaseConnectionByName("default")
+	if conn == nil {
+		t.Fatal("expected default connection to exist")
+	}
+	if conn.GetName() != "default" {
+		t.Errorf("expected name 'default', got %q", conn.GetName())
+	}
+	if conn.GetDriver() != "sqlite" {
+		t.Errorf("expected driver sqlite, got %q", conn.GetDriver())
+	}
+
+	missing := cfg.GetDatabaseConnectionByName("nonexistent")
+	if missing != nil {
+		t.Error("expected nil for nonexistent connection")
 	}
 }
 
@@ -181,9 +291,78 @@ func TestSetters(t *testing.T) {
 	}
 }
 
-func TestDatabaseNeatConfig(t *testing.T) {
-	setTestEnv(t)
+func TestDatabaseSetters(t *testing.T) {
+	cfg := New()
 
+	cfg.SetDatabaseDriver("mysql")
+	cfg.SetDatabaseHost("dbhost")
+	cfg.SetDatabasePort("3306")
+	cfg.SetDatabaseName("mydb")
+	cfg.SetDatabaseUsername("dbuser")
+	cfg.SetDatabasePassword("dbpass")
+	cfg.SetDatabaseSSLMode("require")
+	cfg.SetDatabaseCharset("utf8mb4")
+	cfg.SetDatabaseTimezone("Europe/London")
+	cfg.SetDatabaseDSN("dsn://connection")
+	cfg.SetDatabasePrefix("bp_")
+	cfg.SetDatabaseMaxOpenConns(50)
+	cfg.SetDatabaseMaxIdleConns(10)
+	cfg.SetDatabaseConnMaxLifetimeSeconds(120)
+	cfg.SetDatabaseConnMaxIdleTimeSeconds(30)
+	cfg.SetDatabaseDefaultConnection("custom")
+
+	if cfg.GetDatabaseDriver() != "mysql" {
+		t.Errorf("expected mysql, got %q", cfg.GetDatabaseDriver())
+	}
+	if cfg.GetDatabaseHost() != "dbhost" {
+		t.Errorf("expected dbhost, got %q", cfg.GetDatabaseHost())
+	}
+	if cfg.GetDatabasePort() != "3306" {
+		t.Errorf("expected 3306, got %q", cfg.GetDatabasePort())
+	}
+	if cfg.GetDatabaseName() != "mydb" {
+		t.Errorf("expected mydb, got %q", cfg.GetDatabaseName())
+	}
+	if cfg.GetDatabaseUsername() != "dbuser" {
+		t.Errorf("expected dbuser, got %q", cfg.GetDatabaseUsername())
+	}
+	if cfg.GetDatabasePassword() != "dbpass" {
+		t.Errorf("expected dbpass, got %q", cfg.GetDatabasePassword())
+	}
+	if cfg.GetDatabaseSSLMode() != "require" {
+		t.Errorf("expected require, got %q", cfg.GetDatabaseSSLMode())
+	}
+	if cfg.GetDatabaseCharset() != "utf8mb4" {
+		t.Errorf("expected utf8mb4, got %q", cfg.GetDatabaseCharset())
+	}
+	if cfg.GetDatabaseTimezone() != "Europe/London" {
+		t.Errorf("expected Europe/London, got %q", cfg.GetDatabaseTimezone())
+	}
+	if cfg.GetDatabaseDSN() != "dsn://connection" {
+		t.Errorf("expected dsn://connection, got %q", cfg.GetDatabaseDSN())
+	}
+	if cfg.GetDatabasePrefix() != "bp_" {
+		t.Errorf("expected bp_, got %q", cfg.GetDatabasePrefix())
+	}
+	if cfg.GetDatabaseMaxOpenConns() != 50 {
+		t.Errorf("expected 50, got %d", cfg.GetDatabaseMaxOpenConns())
+	}
+	if cfg.GetDatabaseMaxIdleConns() != 10 {
+		t.Errorf("expected 10, got %d", cfg.GetDatabaseMaxIdleConns())
+	}
+	if cfg.GetDatabaseConnMaxLifetimeSeconds() != 120 {
+		t.Errorf("expected 120, got %d", cfg.GetDatabaseConnMaxLifetimeSeconds())
+	}
+	if cfg.GetDatabaseConnMaxIdleTimeSeconds() != 30 {
+		t.Errorf("expected 30, got %d", cfg.GetDatabaseConnMaxIdleTimeSeconds())
+	}
+	if cfg.GetDatabaseDefaultConnection() != "custom" {
+		t.Errorf("expected custom, got %q", cfg.GetDatabaseDefaultConnection())
+	}
+}
+
+func TestDatabaseNeatConfig(t *testing.T) {
+	setRequiredEnv(t)
 	cfg, err := NewFromEnv()
 	if err != nil {
 		t.Fatalf("NewFromEnv() error: %v", err)
