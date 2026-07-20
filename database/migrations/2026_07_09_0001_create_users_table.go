@@ -3,6 +3,8 @@ package migrations
 import (
 	"errors"
 
+	"project/database/models"
+
 	contractsSchema "github.com/dracory/neat/contracts/database/schema"
 	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/migrator"
@@ -32,7 +34,7 @@ func (m *CreateUsersTable) Up() error {
 		return errors.New("schema is nil")
 	}
 
-	return schema.Create("user", func(table contractsSchema.Blueprint) {
+	return schema.Create(models.UserTableName, func(table contractsSchema.Blueprint) {
 		table.String("id", 21)
 		table.Primary("id")
 		table.String("status", 20).Default("active")
@@ -56,5 +58,5 @@ func (m *CreateUsersTable) Down() error {
 		return errors.New("schema is nil")
 	}
 
-	return schema.DropIfExists("user")
+	return schema.DropIfExists(models.UserTableName)
 }

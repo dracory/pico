@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	UserTableName           = "user"
 	USER_ROLE_ADMINISTRATOR = "administrator"
 	USER_ROLE_USER          = "user"
 	USER_STATUS_ACTIVE      = "active"
@@ -36,7 +37,7 @@ type User struct {
 
 // TableName returns the database table name for User.
 func (User) TableName() string {
-	return "user"
+	return UserTableName
 }
 
 // NewUser creates a new User instance with a generated short ID, active
