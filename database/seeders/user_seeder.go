@@ -39,13 +39,15 @@ func (s *UserSeeder) Run() error {
 
 	seedUsers := []*models.User{
 		models.NewUser().
-			SetName("Admin User").
+			SetFirstName("Admin").
+			SetLastName("User").
 			SetEmail("admin@example.com").
 			SetPassword("$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q").
 			SetRole(models.USER_ROLE_ADMINISTRATOR).
 			SetStatus(models.USER_STATUS_ACTIVE),
 		models.NewUser().
-			SetName("Test User").
+			SetFirstName("Test").
+			SetLastName("User").
 			SetEmail("user@example.com").
 			SetPassword("$2a$10$N9qo8uLOickgx2ZMRZoMy.Mrq4JfZQg7q5Iq2v8qK5q5Iq2v8qK5q").
 			SetRole(models.USER_ROLE_USER).
