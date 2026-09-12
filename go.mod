@@ -9,7 +9,7 @@ require (
 	github.com/dracory/websrv v0.4.0
 	github.com/lmittmann/tint v1.2.0
 	github.com/tursodatabase/libsql-client-go v0.0.0-20260528064733-9d5d30a29a60
-	modernc.org/sqlite v1.57.0
+	modernc.org/sqlite v1.58.0
 )
 
 require (
@@ -17,7 +17,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
 	github.com/dracory/api v1.8.0 // indirect
-	github.com/dracory/cdn v1.11.0 // indirect
+	github.com/dracory/cdn v1.12.0 // indirect
 	github.com/dracory/crypto v0.3.0 // indirect
 	github.com/dracory/dataobject v1.7.0 // indirect
 	github.com/dracory/envenc v1.5.0 // indirect
@@ -41,7 +41,7 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	modernc.org/libc v1.75.3 // indirect
+	modernc.org/libc v1.75.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 )
