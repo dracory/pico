@@ -9,7 +9,6 @@ import (
 	"project/internal/config"
 
 	neatdatabase "github.com/dracory/neat/database"
-	"github.com/lmittmann/tint"
 )
 
 type appImplementation struct {
@@ -28,7 +27,7 @@ func New(cfg config.ConfigInterface) (AppInterface, error) {
 		return nil, errors.New("cfg is nil")
 	}
 
-	logger := slog.New(tint.NewHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	neatDB, err := databaseOpen(cfg)
 	if err != nil {
