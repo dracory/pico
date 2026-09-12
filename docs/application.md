@@ -42,7 +42,7 @@ defer a.Close()
 `app.New()` performs the following:
 
 1. **Validates** the config is non-nil
-2. **Creates a logger** — `slog` with colored output via [tint](https://github.com/lmittmann/tint)
+2. **Creates a logger** — standard `slog.Logger` with `slog.TextHandler`
 3. **Opens the database** — using `config.DatabaseNeatConfig()` to build the neat database config
 4. **Returns** an `AppInterface` with all services initialized
 
@@ -55,7 +55,7 @@ logger := a.GetLogger()
 logger.Info("Server started", "host", cfg.GetAppHost(), "port", cfg.GetAppPort())
 ```
 
-The default logger writes to `stdout` with colored output. Replace it with your own:
+The default logger writes text format logs to `stdout`. Replace it with your own:
 
 ```go
 a.SetLogger(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
